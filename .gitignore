@@ -1,0 +1,7 @@
+.vs/
+__vm/
+Debug/
+!Release/
+Release/*
+!Release/sms_alert.hex
+desktop.ini
