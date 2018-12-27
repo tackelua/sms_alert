@@ -189,7 +189,7 @@ bool Sim800l::hangoffCall() {
 
 
 
-bool Sim800l::sendSms(char* number, char* text) {
+bool Sim800l::sendSms(const char* number, const char* text) {
 
 	SIM_print(F("AT+CMGF=1\r")); //set sms to text mode  
 	_buffer = _readSerial(2000);
