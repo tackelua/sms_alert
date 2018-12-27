@@ -104,12 +104,11 @@ void Sim800l::reset() {
 bool Sim800l::waitReady(unsigned long timeout) {
 	unsigned long t = millis();
 	SIM_print(F("AT\r\n"));
-	while (_readSerial().indexOf("OK") == -1) {
+	while (_readSerial(500).indexOf("OK") == -1) {
 		SIM_print(F("AT\r\n"));
 		if (millis() - t > timeout) {
 			return false;
 		}
-		delay(500);
 	}
 	return true;
 }

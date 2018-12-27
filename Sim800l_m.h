@@ -16,10 +16,10 @@
  *        _____________________________
  *       |  ARDUINO UNO >>>   SIM800L  |
  *        -----------------------------
- *            GND      >>>   GND
- *        RX  10       >>>   TX
- *        TX  11       >>>   RX
- *       RESET 2       >>>   RST
+ *             GND      >>>   GND
+ *        RX   10       >>>   TX
+ *        TX   11       >>>   RX
+ *       RESET 9       >>>   RST
  *
  *   POWER SOURCE 4.2V >>> VCC
  *
@@ -30,13 +30,13 @@
 */
 #ifndef Sim800l_h
 #define Sim800l_h
-#include <SoftwareSerial.h>
+#include "SoftwareSerial.h"
 #include "Arduino.h"
 
 
 #define RX_PIN 10
 #define TX_PIN 11	
-#define RESET_PIN 2   // pin to the reset pin sim800l
+#define RESET_PIN 9   // pin to the reset pin sim800l
 
 #define LED true // used for indicator led, in case that you don want set to false . 
 #define LED_PIN 13 //pin to indicate states. 

@@ -1,21 +1,21 @@
-﻿/*
+/*
  *    PINOUT:
  *        _____________________________
  *       |  ARDUINO UNO >>>   SIM800L  |
  *        -----------------------------
- *            GND      >>>   GND
- *        RX  10       >>>   TX
- *        TX  11       >>>   RX
- *       RESET 2       >>>   RST
+ *             GND      >>>   GND
+ *        RX   10       >>>   TX
+ *        TX   11       >>>   RX
+ *       RESET  9       >>>   RST
  *
- *		 DHT_PIN		4
+ *		 DHT_PIN		8
  *		 WATER_EMPTY	5
  *		 WATER_FULL		6
  *
 */
 
 //https://www.facebook.com/hoanglong171
-//{"cmd":"setphone","phone":["0123456789","+84231564","0906161266","2222224","568498"]}
+//{"cmd":"setphone","phone":["0123456789","+84231564","84906161266","2222224","568498"]}
 //{"cmd":"config","t0":12.1,"t1":12.1,"h0":12.1,"h1":12.1}
 
 #include <EEPROM.h>
@@ -23,14 +23,14 @@
 #include "DHT.h"
 #include "Button.h"
 #include "Sim800l_m.h"
-#include "SoftwareSerial.h" //is necesary for the library!! 
+#include "SoftwareSerial.h"
 
 #define VERSION "0.1"
 
 
-#define DHT_PIN			4
-#define WATER_EMPTY		5
-#define WATER_FULL		6
+#define DHT_PIN			8
+#define WATER_EMPTY		2
+#define WATER_FULL		3
 
 
 #define MAX_PHONE_TOTAL		5

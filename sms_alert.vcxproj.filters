@@ -21,9 +21,6 @@
     <ClInclude Include="__vm\.sms_alert.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SoftwareSerial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Sim800l_m.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -35,9 +32,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SoftwareSerial.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Sim800l_m.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
