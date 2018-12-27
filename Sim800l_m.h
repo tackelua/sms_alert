@@ -1,45 +1,16 @@
-/* this library is writing by  Cristian Steib.
- *      steibkhriz@gmail.com
- *  Designed to work with the GSM Sim800l,maybe work with SIM900L
- *
- *     This library use SoftwareSerial, you can define de RX and TX pin
- *     in the header "Sim800l.h" ,by default the pin is RX=10 TX=11..
- *     be sure that gnd is attached to arduino too.
- *     You can also change the other preferred RESET_PIN
- *
- *     Esta libreria usa SoftwareSerial, se pueden cambiar los pines de RX y TX
- *     en el archivo header, "Sim800l.h", por defecto los pines vienen configurado en
- *     RX=10 TX=11.
- *     Tambien se puede cambiar el RESET_PIN por otro que prefiera
- *
- *    PINOUT:
- *        _____________________________
- *       |  ARDUINO UNO >>>   SIM800L  |
- *        -----------------------------
- *             GND      >>>   GND
- *        RX   10       >>>   TX
- *        TX   11       >>>   RX
- *       RESET 9       >>>   RST
- *
- *   POWER SOURCE 4.2V >>> VCC
- *
- *    Created on: April 20, 2016
- *        Author: Cristian Steib
- *
- *
-*/
 #ifndef Sim800l_h
 #define Sim800l_h
 #include "SoftwareSerial.h"
 #include "Arduino.h"
+#include "Hardware_pins.h"
 
 
-#define RX_PIN 10
-#define TX_PIN 11	
-#define RESET_PIN 9   // pin to the reset pin sim800l
+#define RX_PIN SIM_TX_PIN
+#define TX_PIN SIM_RX_PIN	
+#define RESET_PIN SIM_RESET_PIN   // pin to the reset pin sim800l
 
 #define LED true // used for indicator led, in case that you don want set to false . 
-#define LED_PIN 13 //pin to indicate states. 
+#define LED_PIN LED_STT //pin to indicate states. 
 
 
 

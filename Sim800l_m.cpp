@@ -1,20 +1,3 @@
-/* 
- *    PINOUT:
- *        _____________________________
- *       |  ARDUINO UNO >>>   SIM800L  |
- *        -----------------------------
- *            GND      >>>   GND
- *        RX  10       >>>   TX
- *        TX  11       >>>   RX
- *       RESET 2       >>>   RST
- *
- *   POWER SOURCE 4.2V >>> VCC
- *
- *    Created on: April 20, 2016
- *        Author: Cristian Steib
- *
- *
-*/
 #include "Arduino.h"
 #include "Sim800l_m.h"
 #include <SoftwareSerial.h>
@@ -25,8 +8,10 @@ SoftwareSerial SIM(RX_PIN, TX_PIN);
 //String _buffer;
 
 #define SIM_print(x){		\
+	LED_ON();				\
 	SIM.print(x);			\
 	Serial.println();		\
+	LED_OFF();				\
 }
 
 String SIM_readString() {
@@ -39,6 +24,7 @@ void Sim800l::begin() {
 	SIM.begin(9600);
 #if (LED) 
 	pinMode(OUTPUT, LED_PIN);
+	LED_ON();
 #endif
 	_buffer.reserve(255); //reserve memory to prevent intern fragmention
 }

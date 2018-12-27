@@ -109,6 +109,7 @@
   <ItemGroup>
     <ClInclude Include="Button.h" />
     <ClInclude Include="DHT.h" />
+    <ClInclude Include="Hardware_pins.h" />
     <ClInclude Include="Sim800l_m.h" />
     <ClInclude Include="__vm\.sms_alert.vsarduino.h" />
   </ItemGroup>

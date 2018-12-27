@@ -1,40 +1,22 @@
-﻿/*
- *    PINOUT:
- *        _____________________________
- *       |  ARDUINO UNO >>>   SIM800L  |
- *        -----------------------------
- *             GND      >>>   GND
- *        RX   10       >>>   TX
- *        TX   11       >>>   RX
- *       RESET  9       >>>   RST
- *
- *		 DHT_PIN		8
- *		 WATER_EMPTY	5
- *		 WATER_FULL		6
+/*
+ *https://www.facebook.com/hoanglong171
+ *{"cmd":"setphone","phone":["0387845097","+84387845097","387845097","84387845097","01687845097"]}
+ *{"cmd":"config","t0":20.1,"t1":35,"h0":50,"h1":99}
  *
 */
 
-//https://www.facebook.com/hoanglong171
-//{"cmd":"setphone","phone":["0387845097","+84387845097","387845097","84387845097","01687845097"]}
-//{"cmd":"config","t0":20.1,"t1":35,"h0":50,"h1":99}
 
+#include "Hardware_pins.h"
 #include <EEPROM.h>
 #include "ArduinoJson.h"
 #include "DHT.h"
 #include "Button.h"
-#include "Sim800l_m.h"
 #include "SoftwareSerial.h"
+#include "Sim800l_m.h"
 
 #define VERSION "0.2.1"
 
 
-#define DHT_PIN			8
-#define WATER_EMPTY		A3
-#define WATER_FULL		A4
-
-
-#define MAX_PHONE_TOTAL		5
-#define MAX_PHONE_LENGTH	15
 char phone[MAX_PHONE_TOTAL][MAX_PHONE_LENGTH];
 
 struct config {
@@ -62,55 +44,57 @@ float humi;
 Button WaterEmpty(WATER_EMPTY, PULLUP, INVERT, DEBOUNCE_MS);
 Button WaterFull(WATER_FULL, PULLUP, INVERT, DEBOUNCE_MS);
 
+
 int freeRam() {
 	extern int __heap_start, *__brkval;
 	int v;
 	return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
 }
-#define ram(x) Serial.println(String(F("RAM ")) + String(F(x)) + " " + String(freeRam()));
+#define ram(x) Sprintln(String(F("RAM ")) + String(F(x)) + " " + String(freeRam()));
+
 
 void printConfig() {
-	Serial.print(F("t0\t"));
-	Serial.println(config.temp_min);
-	Serial.print(F("t1\t"));
-	Serial.println(config.temp_max);
-	Serial.print(F("h0\t"));
-	Serial.println(config.humi_min);
-	Serial.print(F("h1\t"));
-	Serial.println(config.humi_max);
+	Sprint(F("t0\t"));
+	Sprintln(config.temp_min);
+	Sprint(F("t1\t"));
+	Sprintln(config.temp_max);
+	Sprint(F("h0\t"));
+	Sprintln(config.humi_min);
+	Sprint(F("h1\t"));
+	Sprintln(config.humi_max);
 }
 void printPhones() {
-	Serial.println(F("Idx\tLen\tPhone"));
+	Sprintln(F("Idx\tLen\tPhone"));
 	for (int i = 0; i < 5; i++)
 	{
 		String p = getPhone(i);
-		Serial.print(i);
-		Serial.print("\t");
-		Serial.print(p.length());
-		Serial.print("\t");
-		Serial.print(p.c_str());
-		Serial.println();
+		Sprint(i);
+		Sprint("\t");
+		Sprint(p.length());
+		Sprint("\t");
+		Sprint(p.c_str());
+		Sprintln();
 	}
 }
 void saveConfig() {
 	EEPROM.put(100, config);
-	Serial.println(F("\r\nSave configs"));
+	Sprintln(F("\r\nSave configs"));
 	printConfig();
 }
 void loadConfig() {
 	EEPROM.get(100, config);
-	Serial.println(F("\r\nLoad configs"));
+	Sprintln(F("\r\nLoad configs"));
 	printConfig();
 }
 void savePhones() {
 	EEPROM.put(0, phone);
-	Serial.println(F("\r\nSave phone list"));
+	Sprintln(F("\r\nSave phone list"));
 	printPhones();
 }
 
 void loadPhones() {
 	EEPROM.get(0, phone);
-	Serial.println(F("\r\nLoad phone list"));
+	Sprintln(F("\r\nLoad phone list"));
 	printPhones();
 }
 
@@ -188,14 +172,14 @@ String getPhoneList() {
 
 void command_execute(const String& cmd) {
 	ram("exec");
-	Serial.print(F("\r\nCommand ["));
-	Serial.print(cmd.length());
-	Serial.println(F("]"));
-	Serial.println(cmd);
-	Serial.println(F("--------"));
+	Sprint(F("\r\nCommand ["));
+	Sprint(cmd.length());
+	Sprintln(F("]"));
+	Sprintln(cmd);
+	Sprintln(F("--------"));
 
 	if (cmd.startsWith(String(F("/config")))) {
-		Serial.println(F("\r\nConfigs"));
+		Sprintln(F("\r\nConfigs"));
 		printConfig();
 
 		if (isPhoneNumber(res_phone)) {
@@ -207,7 +191,7 @@ void command_execute(const String& cmd) {
 		return;
 	}
 	else if (cmd.startsWith(String(F("/phone")))) {
-		Serial.println(F("\r\nPhones"));
+		Sprintln(F("\r\nPhones"));
 		printPhones();
 
 		if (isPhoneNumber(res_phone)) {
@@ -224,7 +208,7 @@ void command_execute(const String& cmd) {
 	ram("json");
 	if (!command.success()) {
 		String err = F("Json Syntax Wrong");
-		Serial.println(err);
+		Sprintln(err);
 		if (isPhoneNumber(res_phone)) {
 			sendSms(res_phone, err);
 			sim.delAllSms();
@@ -235,7 +219,7 @@ void command_execute(const String& cmd) {
 	if (c == String(F("setphone"))) {
 		JsonArray& phoneArray = command[String(F("phone"))].asArray();
 		if (!phoneArray.success()) {
-			Serial.println(F("Phone Array Wrong"));
+			Sprintln(F("Phone Array Wrong"));
 		}
 		//clear phone[][]
 		for (int r = 0; r < MAX_PHONE_TOTAL; r++) {
@@ -296,24 +280,24 @@ bool sendSms(const String& number, const String&  text) {
 	if (!isPhoneNumber(n)) {
 		return false;
 	}
-	Serial.print(F("\r\nSMS << "));
-	Serial.println(n);
-	Serial.println(text);
+	Sprint(F("\r\nSMS << "));
+	Sprintln(n);
+	Sprintln(text);
 	if (isPhoneNumber(n)) {
 		ram("send sms");
 		bool ret = sim.sendSms(n.c_str(), text.c_str());
 		//bool ret = true;
 		if (ret) {
-			Serial.println(F("Send SMS success"));
+			Sprintln(F("Send SMS success"));
 			return true;
 		}
 		else {
-			Serial.println(F("Send SMS failed"));
+			Sprintln(F("Send SMS failed"));
 			return false;
 		}
 	}
 	else {
-		Serial.println(F("Number invalid"));
+		Sprintln(F("Number invalid"));
 		return false;
 	}
 }
@@ -327,7 +311,7 @@ void readDHT(unsigned long interval = 3000) {
 
 		if (isnan(h) || isnan(t)) {
 			isDhtReady = false;
-			Serial.println(F("Failed to read from DHT sensor!"));
+			Sprintln(F("Failed to read from DHT sensor!"));
 			return;
 		}
 
@@ -335,10 +319,10 @@ void readDHT(unsigned long interval = 3000) {
 		temp = t;
 		humi = h;
 
-		Serial.print(F("\r\nTemp = "));
-		Serial.print(temp);
-		Serial.print(F("\r\nHumi = "));
-		Serial.println(humi);
+		Sprint(F("\r\nTemp = "));
+		Sprint(temp);
+		Sprint(F("\r\nHumi = "));
+		Sprintln(humi);
 	}
 }
 void alarmTemp() {
@@ -349,8 +333,8 @@ void alarmTemp() {
 	if (!isAllowAlarmTemp) {
 		if (config.temp_min <= temp && temp <= config.temp_max) {
 			isAllowAlarmTemp = true;
-			Serial.print(F("Temp alarm reset "));
-			Serial.println(temp);
+			Sprint(F("Temp alarm reset "));
+			Sprintln(temp);
 		}
 		return;
 	}
@@ -377,8 +361,8 @@ void alarmHumi() {
 	if (!isAllowAlarmHumi) {
 		if (config.humi_min <= humi && humi <= config.humi_max) {
 			isAllowAlarmHumi = true;
-			Serial.print(F("Humi alarm reset "));
-			Serial.println(humi);
+			Sprint(F("Humi alarm reset "));
+			Sprintln(humi);
 		}
 		return;
 	}
@@ -459,26 +443,26 @@ void sms_handle(unsigned long timeout = 10000) {
 	if (phoneRes >= 0) {
 		res_phone = msg.substring(phoneRes + 1);
 		res_phone = res_phone.substring(0, res_phone.indexOf(String(F("\""))));
-		Serial.println(res_phone);
+		Sprintln(res_phone);
 	}
 
 	int idx = msg.indexOf(String(F("\"\r\n")));
 	if (idx >= 0) {
 		msg = msg.substring(idx + 3, msg.length() - 4);
 		msg.trim();
-		Serial.print(F("SMS>> "));
+		Sprint(F("SMS>> "));
 
 		ram("before exec sms");
 		command_execute(msg);
 
-		Serial.println();
+		Sprintln();
 	}
 	res_phone = "";
 }
 
 void command_handle() {
 	if (Serial.available()) {
-		Serial.println();
+		Sprintln();
 		String s = Serial.readString();
 		s.trim();
 		ram("before exec serial");
@@ -492,7 +476,7 @@ void setup() {
 	Serial.begin(9600);
 	Serial.setTimeout(200);
 	delay(50);
-	Serial.println(String(F("Version: ")) + String(F(VERSION)));
+	Sprintln(String(F("Version: ")) + String(F(VERSION)));
 
 	ram("1");
 	sim.begin();
@@ -503,13 +487,16 @@ void setup() {
 	loadPhones();
 
 	ram("3");
-	Serial.println();
+	Sprintln();
 	if (sim.waitReady()) {
-		Serial.println(F("SIM ready"));
+		Sprintln(F("SIM ready"));
+
 	}
 	else {
-		Serial.println(F("SIM unavailable"));
+		Sprintln(F("SIM unavailable"));
 	}
+
+	LED_OFF();
 	ram("run");
 }
 
