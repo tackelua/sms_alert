@@ -1,4 +1,4 @@
-/*
+﻿/*
  *    PINOUT:
  *        _____________________________
  *       |  ARDUINO UNO >>>   SIM800L  |
@@ -16,7 +16,7 @@
 
 //https://www.facebook.com/hoanglong171
 //{"cmd":"setphone","phone":["0123456789","+84231564","84906161266","2222224","568498"]}
-//{"cmd":"config","t0":12.1,"t1":12.1,"h0":12.1,"h1":12.1}
+//{"cmd":"config","t0":20.1,"t1":35,"h0":50,"h1":99}
 
 #include <EEPROM.h>
 #include "ArduinoJson.h"
@@ -25,12 +25,12 @@
 #include "Sim800l_m.h"
 #include "SoftwareSerial.h"
 
-#define VERSION "0.1"
+#define VERSION "0.2"
 
 
 #define DHT_PIN			8
-#define WATER_EMPTY		2
-#define WATER_FULL		3
+#define WATER_EMPTY		A3
+#define WATER_FULL		A4
 
 
 #define MAX_PHONE_TOTAL		5
@@ -45,6 +45,9 @@ struct config {
 } config;
 
 Sim800l sim;
+String sms;
+String res_phone; //save sdt gửi đến -> hẹn gửi đi
+String res_text;  //text hẹn gửi đi
 DHT dht(DHT_PIN, DHT11);
 bool isDhtReady = false;
 float temp;
@@ -126,6 +129,10 @@ String getPhone(int index) {
 }
 
 bool isPhoneNumber(String number) {
+	number.trim();
+	if (number.length() <= 0) {
+		return false;
+	}
 	for (int i = 0; i < number.length(); i++) {
 		char c = number.charAt(i);
 		if (!isdigit(c) && (c != '+')) {
@@ -155,18 +162,65 @@ String formatStandardPhoneNumber(String number) {
 	return n;
 }
 
-void command_handle(String cmd) {
-	cmd.toLowerCase();
+String getConfigs() {
+	String c = "Configs";
+	c += "\r\nt0=" + String(config.temp_min);
+	c += "\r\nt1=" + String(config.temp_max);
+	c += "\r\nh0=" + String(config.humi_min);
+	c += "\r\nh1=" + String(config.humi_max);
+	return c;
+}
+String getPhoneList() {
+	String p = "Phones:\r\n";
+	for (int i = 0; i < MAX_PHONE_TOTAL; i++)
+	{
+		String n = getPhone(i);
+		if (isPhoneNumber(n)) {
+			p += n + ";\r\n";
+		}
+	}
+	return p;
+}
 
-	DynamicJsonBuffer buffer(200);
+void command_execute(String cmd) {
+	cmd.toLowerCase();
+	cmd.trim();
+	Serial.print(F("\r\nCommand ["));
+	Serial.print(cmd.length());
+	Serial.println(F("]"));
+	Serial.println(cmd);
+	Serial.println(F("--------"));
+	if (cmd.startsWith("/info")) {
+		Serial.println(F("\r\nConfigs"));
+		printConfig();
+		Serial.println(F("\r\nPhones"));
+		printPhones();
+
+
+		if (isPhoneNumber(res_phone)) {
+			res_text = getConfigs() + "\r\n\r\n" + getPhoneList();
+		}
+		return;
+	}
+
+	int f = cmd.lastIndexOf("}");
+	if (f >= 0) {
+		cmd = cmd.substring(0, f + 1);
+		cmd.trim();
+		Serial.println(cmd);
+	}
+	StaticJsonBuffer<200> buffer;
 	JsonObject& command = buffer.parseObject(cmd);
 	if (!command.success()) {
-		Serial.println(F("Json Syntax Wrong"));
+		String err = "Json Syntax Wrong";
+		Serial.println(err);
+		if (isPhoneNumber(res_phone)) {
+			sendSms(res_phone, err);
+			res_phone = "";
+		}
 		return;
 	}
 	String c = command["cmd"].as<String>();
-	Serial.print(F("\r\n[cmd] "));
-	Serial.println(c);
 	if (c == "setphone") {
 		JsonArray& phoneArray = command["phone"].asArray();
 		if (!phoneArray.success()) {
@@ -200,6 +254,10 @@ void command_handle(String cmd) {
 		}
 
 		savePhones();
+
+		if (isPhoneNumber(res_phone)) {
+			res_text = getPhoneList();
+		}
 	}
 
 	else if (c == "config") {
@@ -208,16 +266,25 @@ void command_handle(String cmd) {
 		config.humi_min = command["h0"].as<float>();
 		config.humi_max = command["h1"].as<float>();
 		saveConfig();
+
+		if (isPhoneNumber(res_phone)) {
+			res_text = getConfigs();
+		}
 	}
 }
 
 bool sendSms(String number, String text) {
 	String n = formatStandardPhoneNumber(number);
-	Serial.print(F("\r\nSMS >>"));
+	if (!isPhoneNumber(n)) {
+		return false;
+	}
+	text += "\r\n--\r\nfb.com/tackelua";
+	Serial.print(F("\r\nSMS << "));
 	Serial.println(n);
 	Serial.println(text);
 	if (isPhoneNumber(n)) {
-		bool ret = sim.sendSms((char*)n.c_str(), (char*)text.c_str());
+		//bool ret = sim.sendSms((char*)n.c_str(), (char*)text.c_str());
+		bool ret = true;
 		if (ret) {
 			Serial.println(F("Send SMS success"));
 			return true;
@@ -233,7 +300,32 @@ bool sendSms(String number, String text) {
 	}
 }
 
-void readDHT(unsigned long interval = 2000) {
+void sms_handle(unsigned long timeout = 10000) {
+	static unsigned long t = millis();
+	if (millis() - t < timeout) {
+		return;
+	}
+	t = millis();
+	String msg = sim.readSms(1);
+	msg.toLowerCase();
+	msg.trim();
+	int phoneRes = msg.indexOf("\"+");
+	if (phoneRes >= 0) {
+		res_phone = msg.substring(phoneRes + 1);
+		res_phone = res_phone.substring(0, res_phone.indexOf("\""));
+		Serial.println(res_phone);
+	}
+
+	int idx = msg.indexOf("\"\r\n");
+	if (idx >= 0) {
+		msg = msg.substring(idx + 3, msg.length() - 4);
+		msg.trim();
+		Serial.print(F("SMS>> "));
+		sms = msg;
+	}
+}
+
+void readDHT(unsigned long interval = 3000) {
 	static unsigned long t = millis();
 	if (millis() - t > interval) {
 		t = millis();
@@ -253,7 +345,7 @@ void readDHT(unsigned long interval = 2000) {
 		Serial.print(F("\r\nTemp = "));
 		Serial.print(temp);
 		Serial.print(F("\r\nHumi = "));
-		Serial.print(humi);
+		Serial.println(humi);
 	}
 }
 void alarmTemp() {
@@ -317,7 +409,7 @@ void alarmWaterEmpty() {
 		}
 		return;
 	}
-	if (WaterEmpty.wasPressed()) {
+	if (WaterEmpty.wasPressed() && WaterFull.isPressed()) {
 		isAllowAlarmWaterEmpty = false;
 		String a = "Canh bao muc nuoc qua thap.";
 		for (int i = 0; i < MAX_PHONE_TOTAL; i++) {
@@ -334,7 +426,7 @@ void alarmWaterFull() {
 		}
 		return;
 	}
-	if (WaterFull.wasReleased()) {
+	if (WaterFull.wasReleased() && WaterEmpty.isReleased()) {
 		isAllowAlarmWaterFull = false;
 		String a = "Canh bao muc nuoc qua cao.";
 		for (int i = 0; i < MAX_PHONE_TOTAL; i++) {
@@ -345,8 +437,13 @@ void alarmWaterFull() {
 
 void readSensors() {
 	readDHT();
-	WaterEmpty.read();
-	WaterFull.read();
+
+	static unsigned long t = millis();
+	if (millis() - t > 300) {
+		t = millis();
+		WaterEmpty.read();
+		WaterFull.read();
+	}
 }
 void alarm() {
 	alarmTemp();
@@ -355,10 +452,35 @@ void alarm() {
 	alarmWaterFull();
 }
 
+void command_handle() {
+	if (Serial.available()) {
+		String s = Serial.readString();
+		s.trim();
+		command_execute(s);
+	}
+
+	sms_handle();
+	if (sms != "") {
+		command_execute(sms);
+		sms = "";
+
+		if (res_phone != "") {
+			sendSms(res_phone, res_text);
+			res_phone = "";
+		}
+
+		Serial.println();
+		sim.delAllSms();
+	}
+}
+
 void setup() {
 	Serial.begin(9600);
 	Serial.setTimeout(100);
 	delay(50);
+	sms.reserve(200);
+	res_phone.reserve(15);
+	res_text.reserve(200);
 	Serial.println("Version: " VERSION);
 
 	sim.begin();
@@ -380,19 +502,7 @@ void setup() {
 }
 
 void loop() {
-	if (Serial.available()) {
-		String s = Serial.readString();
-		s.trim();
-		if (s == "/show") {
-			Serial.println(F("\r\nConfigs"));
-			printConfig();
-			Serial.println(F("\r\nPhones"));
-			printPhones();
-		}
-		else {
-			command_handle(s);
-		}
-	}
-	readDHT();
-	alarmTemp();
+	readSensors();
+	alarm();
+	command_handle();
 }

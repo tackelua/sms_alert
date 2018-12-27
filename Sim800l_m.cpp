@@ -1,17 +1,4 @@
-/* this library is writing by  Cristian Steib.
- *      steibkhriz@gmail.com
- *  Designed to work with the GSM Sim800l,maybe work with SIM900L
- *
- *     This library use SoftwareSerial, you can define de RX and TX pin
- *     in the header "Sim800l.h" ,by default the pin is RX=10 TX=11..
- *     be sure that gnd is attached to arduino too.
- *     You can also change the other preferred RESET_PIN
- *
- *     Esta libreria usa SoftwareSerial, se pueden cambiar los pines de RX y TX
- *     en el archivo header, "Sim800l.h", por defecto los pines vienen configurado en
- *     RX=10 TX=11.
- *     Tambien se puede cambiar el RESET_PIN por otro que prefiera
- *
+/* 
  *    PINOUT:
  *        _____________________________
  *       |  ARDUINO UNO >>>   SIM800L  |
@@ -39,7 +26,7 @@ SoftwareSerial SIM(RX_PIN, TX_PIN);
 
 #define SIM_print(x){		\
 	SIM.print(x);			\
-	Serial.print(x);		\
+	Serial.println();		\
 }
 
 String SIM_readString() {
@@ -189,7 +176,6 @@ uint8_t Sim800l::getCallStatus() {
 	SIM_print(F("AT+CPAS\r\n"));
 	_buffer = _readSerial();
 	return _buffer.substring(_buffer.indexOf("+CPAS: ") + 7, _buffer.indexOf("+CPAS: ") + 9).toInt();
-
 }
 
 
