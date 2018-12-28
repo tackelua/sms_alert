@@ -1,7 +1,7 @@
 /*
  *https://www.facebook.com/hoanglong171
- *{"cmd":"setphone","phone":["0387845097","+84387845097","387845097","84387845097","01687845097"]}
- *{"cmd":"config","t0":20.1,"t1":35,"h0":50,"h1":99}
+ *{"cmd":"setphone","phone":["0387845097","+84363773461"]}
+ *{"cmd":"config","t0":20.1,"t1":35,"h0":30,"h1":99}
  *
 */
 
@@ -14,7 +14,7 @@
 #include "SoftwareSerial.h"
 #include "Sim800l_m.h"
 
-#define VERSION "0.2.1"
+#define VERSION "0.3"
 
 
 char phone[MAX_PHONE_TOTAL][MAX_PHONE_LENGTH];
@@ -50,7 +50,7 @@ int freeRam() {
 	int v;
 	return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
 }
-#define ram(x) Sprintln(String(F("RAM ")) + String(F(x)) + " " + String(freeRam()));
+#define ram(x) Sprintln(String(F("\r\nRAM ")) + String(F(x)) + " " + String(freeRam()));
 
 
 void printConfig() {
@@ -488,12 +488,8 @@ void setup() {
 
 	ram("3");
 	Sprintln();
-	if (sim.waitReady()) {
+	if (sim.waitReady(2000)) {
 		Sprintln(F("SIM ready"));
-
-	}
-	else {
-		Sprintln(F("SIM unavailable"));
 	}
 
 	LED_OFF();
@@ -501,10 +497,11 @@ void setup() {
 }
 
 void loop() {
-	readSensors(10000);
+	readSensors(5000);
 	alarm();
 	checkram();
 	command_handle();
+	led_blink();
 }
 void checkram() {
 	static unsigned long t = millis();
@@ -513,13 +510,3 @@ void checkram() {
 		ram("");
 	}
 }
-
-
-//void setup() {
-//	Serial.begin(9600);
-//	delay(1000);
-//	ram();
-//}
-//void loop() {
-//	delay(1);
-//}

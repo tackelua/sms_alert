@@ -17,8 +17,8 @@
 
 #define LED_STT         12
 
-#define WATER_EMPTY     A3
-#define WATER_FULL      A4
+#define WATER_EMPTY     A0
+#define WATER_FULL      A1
 
 #define LED_ON();       digitalWrite(LED_STT, LOW);
 #define LED_OFF();      digitalWrite(LED_STT, HIGH);

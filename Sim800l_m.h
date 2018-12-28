@@ -14,13 +14,14 @@
 
 
 
+void led_blink(unsigned long interval = 3000);
 
 class Sim800l
 {
 private:
 	int _timeout;
 	String _buffer;
-	String _readSerial(long t = 12000);
+	String _readSerial(long t = 5000);
 
 
 public:

@@ -23,7 +23,7 @@ String SIM_readString() {
 void Sim800l::begin() {
 	SIM.begin(9600);
 #if (LED) 
-	pinMode(OUTPUT, LED_PIN);
+	pinMode(LED_PIN, OUTPUT);
 	LED_ON();
 #endif
 	_buffer.reserve(255); //reserve memory to prevent intern fragmention
@@ -33,12 +33,22 @@ void Sim800l::begin() {
 //
 //PRIVATE METHODS
 //
+void led_blink(unsigned long interval) {
+	static unsigned long t = millis();
+	if (millis() - t > interval) {
+		t = millis();
+		LED_ON();
+		delay(100);
+		LED_OFF();
+	}
+}
 String Sim800l::_readSerial(long t) {
 	_timeout = 0;
 	while (!SIM.available() && _timeout < t)
 	{
 		delay(13);
 		_timeout++;
+		led_blink();
 	}
 	if (SIM.available()) {
 		return SIM_readString();
